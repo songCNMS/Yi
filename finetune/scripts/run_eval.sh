@@ -3,6 +3,6 @@
 cd "$(dirname "${BASH_SOURCE[0]}")/../sft/"
 
 python prompt_eval.py \
-	--model_name_or_path_base=/base_model \
-	--model_name_or_path_finetune=/finetuned_model \
-	--language Chinese
+	--model_name_or_path_base="01-ai/Yi-6B-200K"\
+	--model_name_or_path_finetune="./output_Yi_6b_chat_sft_lora_1" \
+	--language Other

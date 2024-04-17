@@ -11,6 +11,7 @@ sys.path.append(
 )
 from utils.model.model_utils import create_hf_model
 from utils.utils import load_hf_tokenizer
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +63,11 @@ def parse_args():
     parser.add_argument(
         "--max_new_tokens",
         type=int,
-        default=200,
+        default=4000,
         help="Specify num of return sequences",
     )
     parser.add_argument(
-        "--language", type=str, default="Chinese", choices=["English", "Chinese"]
+        "--language", type=str, default="Chinese", choices=["English", "Chinese", "Other"]
     )
     parser.add_argument("--eos", type=str, default="<|endoftext|>")
 
@@ -83,7 +84,7 @@ def generate(
     num_beam_groups=1,
     do_sample=False,
     num_return_sequences=1,
-    max_new_tokens=200,
+    max_new_tokens=4000,
     eos="<|endoftext|>",
 ):
     stop_token_id = tokenizer.convert_tokens_to_ids(eos)
@@ -173,6 +174,10 @@ def main():
     else:
         # TODO:
         prompts = []
+        with open("./yi_hvac_example_dataset/data/eval.jsonl", "r") as f:
+            for line in f.readlines():
+                js = json.loads(line)
+                prompts.append(js["prompt"])
 
     prompt_eval(args, model_baseline, model_fintuned, tokenizer, device, prompts)
 
