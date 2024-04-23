@@ -44,9 +44,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
         )
     elif "yi" in dataset_name:
         chat_path = dataset_name
-        print(chat_path + "/data/train.json")
+        print(chat_path + "/data/train.jsonl")
         print(os.path.isfile(chat_path + "/data/train.jsonl"))
-        print(chat_path + "/data/eval.json")
+        print(chat_path + "/data/eval.jsonl")
         print(os.path.isfile(chat_path + "/data/eval.jsonl"))
         if not (
             os.path.isfile(chat_path + "/data/train.jsonl")
@@ -85,6 +85,7 @@ def get_raw_dataset_split_index(
     data_size,
 ):
     index_file_name = f"{output_path}/{dataset_name}_seed{seed}_{split_name}_{data_split}_{split_index}.npy"
+    print(index_file_name)
     # reindex each time when using local jsonfile since it's more likely to get modified
     if (not os.path.isfile(index_file_name)) or (dataset_name == "jsonfile"):
         splits = [float(s) for s in data_split.split(",")]
@@ -196,7 +197,6 @@ def create_dataset(
     print("finish get raw dataset")
 
     train_dataset = raw_dataset.get_train_data()
-    # print(train_dataset)
 
     train_index = get_raw_dataset_split_index(
         local_rank,
@@ -208,7 +208,9 @@ def create_dataset(
         train_phase,
         len(train_dataset),
     )
+    print(train_index)
     train_dataset = Subset(train_dataset, train_index)
+    print("len(train_dataset): ", len(train_dataset))
     train_dataset = create_dataset_split(
         train_dataset,
         raw_dataset,
@@ -276,7 +278,6 @@ def create_prompt_dataset(
     cache_found = os.path.isfile(train_fname) and os.path.isfile(eval_fname)
     buf_create_cache = torch.ByteTensor([not cache_found]).cuda()
     torch.distributed.all_reduce(buf_create_cache)
-
     if local_rank <= 0 and (buf_create_cache.item() != 0 or reload):
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(

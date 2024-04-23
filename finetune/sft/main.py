@@ -94,6 +94,12 @@ def parse_args():
         help="Batch size (per device) for the evaluation dataloader.",
     )
     parser.add_argument(
+        "--save_freq",
+        type=int,
+        default=10,
+        help="Save frequency.",
+    )
+    parser.add_argument(
         "--max_seq_len",
         type=int,
         default=512,
@@ -279,6 +285,7 @@ def main():
         args.max_seq_len,
         end_of_conversation_token="<|endoftext|>",
         sft_only_data_path=args.sft_only_data_path,
+        reload=True
     )
     # DataLoaders creation:
     if args.local_rank == -1:
@@ -299,6 +306,11 @@ def main():
         sampler=eval_sampler,
         batch_size=args.per_device_eval_batch_size,
     )
+    
+    print("train len: ", len(train_dataset), train_dataset[0])
+    print("eval len: ", len(eval_dataset))
+    # assert(len(train_dataloader) > 0, "error")
+    # assert(len(eval_dataloader) > 0, "error")
 
     def evaluation(model, eval_dataloader):
         model.eval()
@@ -353,6 +365,8 @@ def main():
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable()
 
+    print()    
+    
     # Train!
     print_rank_0("***** Running training *****", args.global_rank)
     print_rank_0(
@@ -361,6 +375,19 @@ def main():
     )
     perplexity = evaluation(model, eval_dataloader)
     # print_rank_0(f"ppl: {perplexity}", args.global_rank)
+    
+    def save_model(sub_dir):
+        print_rank_0("saving the final model ...", args.global_rank)
+        model = convert_lora_to_linear_layer(model)
+
+        if args.global_rank == 0:
+            save_hf_format(model, tokenizer, args, sub_folder=sub_dir)
+        if args.zero_stage == 3:
+            # For zero stage 3, each gpu only has a part of the model, so we need a special save function
+            save_zero_three_model(
+                model, args.global_rank, args.output_dir, zero_stage=args.zero_stage, sub_folder=sub_dir
+            )
+        
 
     for epoch in range(args.num_train_epochs):
         print_rank_0(
@@ -386,7 +413,8 @@ def main():
 
             if step == args.training_debug_steps:
                 break
-
+        if (epoch+1) % (args.save_freq) == 0 and args.output_dir is not None:
+            save_model(f"epoch_{epoch}")
         # Evaluate perplexity on the validation set.
         print_rank_0(
             f"***** Evaluating perplexity, Epoch {epoch+1}/{args.num_train_epochs} *****",
@@ -398,17 +426,7 @@ def main():
         model.tput_timer.update_epoch_count()
 
     if args.output_dir is not None:
-        print_rank_0("saving the final model ...", args.global_rank)
-        model = convert_lora_to_linear_layer(model)
-
-        if args.global_rank == 0:
-            save_hf_format(model, tokenizer, args)
-
-        if args.zero_stage == 3:
-            # For zero stage 3, each gpu only has a part of the model, so we need a special save function
-            save_zero_three_model(
-                model, args.global_rank, args.output_dir, zero_stage=args.zero_stage
-            )
+        save_model("final")
 
 
 if __name__ == "__main__":

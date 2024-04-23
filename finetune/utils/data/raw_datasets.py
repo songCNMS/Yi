@@ -136,7 +136,7 @@ class YiDataset(PromptRawDataset):
         super().__init__(output_path, seed, local_rank, dataset_name)
         print("data path is {}".format(chat_path))
         self.dataset_name = "yi"
-        self.dataset_name_clean = "yi"
+        self.dataset_name_clean = "jsonfile"
         self.raw_datasets = load_dataset(
             "json",
             data_files={
@@ -144,6 +144,7 @@ class YiDataset(PromptRawDataset):
                 "eval": chat_path + "/data/eval.jsonl",
             },
         )
+        
 
     def get_train_data(self):
         if self.raw_datasets["train"] is not None:
