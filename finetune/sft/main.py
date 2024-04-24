@@ -376,7 +376,7 @@ def main():
     perplexity = evaluation(model, eval_dataloader)
     # print_rank_0(f"ppl: {perplexity}", args.global_rank)
     
-    def save_model(sub_dir):
+    def save_model(model, tokenizer, args, sub_dir):
         print_rank_0("saving the final model ...", args.global_rank)
         model = convert_lora_to_linear_layer(model)
 
@@ -414,7 +414,7 @@ def main():
             if step == args.training_debug_steps:
                 break
         if (epoch+1) % (args.save_freq) == 0 and args.output_dir is not None:
-            save_model(f"epoch_{epoch}")
+            save_model(model, tokenizer, args, f"epoch_{epoch}")
         # Evaluate perplexity on the validation set.
         print_rank_0(
             f"***** Evaluating perplexity, Epoch {epoch+1}/{args.num_train_epochs} *****",
@@ -426,7 +426,7 @@ def main():
         model.tput_timer.update_epoch_count()
 
     if args.output_dir is not None:
-        save_model("final")
+        save_model(model, tokenizer, args, "final")
 
 
 if __name__ == "__main__":
