@@ -61,7 +61,8 @@ def load_hf_tokenizer(model_name_or_path, fast_tokenizer=False):
     else:
         print("tokenizer path not exist")
         tokenizer = get_tokenizer(model_name_or_path, fast_tokenizer=fast_tokenizer)
-
+    
+    tokenizer.padding_side  = 'left'
     return tokenizer
 
 
