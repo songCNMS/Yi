@@ -63,7 +63,7 @@ def parse_args():
     parser.add_argument(
         "--max_new_tokens",
         type=int,
-        default=4000,
+        default=512,
         help="Specify num of return sequences",
     )
     parser.add_argument(
@@ -174,7 +174,7 @@ def main():
     else:
         # TODO:
         prompts = []
-        with open("./yi_hvac_example_dataset/data/eval.jsonl", "r") as f:
+        with open("./yi_qa_example_dataset/data/eval.jsonl", "r") as f:
             for line in f.readlines():
                 js = json.loads(line)
                 prompts.append(js["prompt"])

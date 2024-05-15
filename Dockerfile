@@ -1,5 +1,5 @@
 ARG REGISTRY="nvcr.io"
-ARG CUDA_VERSION="11.8.0"
+ARG CUDA_VERSION="12.1.0"
 FROM mambaorg/micromamba:1.5.1 as micromamba
 FROM ${REGISTRY}/nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04 as base
 
